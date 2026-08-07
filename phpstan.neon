@@ -1,0 +1,10 @@
+includes:
+
+parameters:
+    level: 8
+    paths:
+        - app
+    excludePaths:
+        - storage
+        - vendor
+    checkMissingIterableValueType: false
