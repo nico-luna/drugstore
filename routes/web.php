@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Customers\CustomerController;
 use App\Http\Controllers\Identity\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -29,5 +30,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/usuarios', [UserController::class, 'store'])->name('usuarios.store');
         Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
         Route::post('/usuarios/{id}/toggle', [UserController::class, 'toggle'])->name('usuarios.toggle');
+    });
+
+    // Clientes Module (Fase 1B.4)
+    Route::middleware('permission:clientes')->group(function () {
+        Route::get('/clientes', [CustomerController::class, 'index'])->name('clientes.index');
+        Route::post('/clientes', [CustomerController::class, 'store'])->name('clientes.store');
+        Route::put('/clientes/{id}', [CustomerController::class, 'update'])->name('clientes.update');
+        Route::post('/clientes/{id}/toggle', [CustomerController::class, 'toggle'])->name('clientes.toggle');
     });
 });
