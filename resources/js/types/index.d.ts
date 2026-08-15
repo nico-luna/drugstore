@@ -8,7 +8,7 @@ export interface User {
     permisos: string[];
 }
 
-export interface PageProps {
+export interface PageProps extends Record<string, unknown> {
     auth: {
         user: User | null;
     };
