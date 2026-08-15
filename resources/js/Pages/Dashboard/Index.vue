@@ -1,69 +1,43 @@
 <template>
-  <div class="dashboard-page">
-    <header class="hero-panel">
+  <AppLayout title="Panel principal">
+    <section class="hero-panel">
       <div>
         <p class="eyebrow">
           Resumen operativo
         </p>
-        <h2>Hola, {{ authUser?.nombre || 'Usuario' }}</h2>
+        <h2>Hola, {{ user?.nombre }}</h2>
         <p>Gestioná la operación diaria desde un único lugar.</p>
       </div>
-      <form
-        method="post"
-        action="/logout"
+      <Link
+        v-if="canNuevaVenta"
+        class="button primary"
+        href="/nueva-venta"
       >
-        <button
-          type="submit"
-          class="button secondary"
-        >
-          Cerrar sesión
-        </button>
-      </form>
-    </header>
-  </div>
+        Registrar venta
+      </Link>
+    </section>
+
+    <section
+      class="stats-grid"
+      aria-label="Indicadores"
+    >
+      <!-- Stat cards will be populated in 1B.6 Dashboard -->
+    </section>
+  </AppLayout>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import type { PageProps, User } from '@/types';
 
-const page = usePage();
-const authUser = computed(() => {
-  const props = page.props as Record<string, any>;
-  return props?.auth?.user;
+const page = usePage<PageProps>();
+const user = computed<User | null>(() => page.props.auth?.user ?? null);
+
+const canNuevaVenta = computed(() => {
+  if (!user.value) return false;
+  if (user.value.es_admin) return true;
+  return Array.isArray(user.value.permisos) && user.value.permisos.includes('nueva_venta');
 });
 </script>
-
-<style scoped>
-.dashboard-page {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-.hero-panel {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: white;
-  padding: 1.5rem 2rem;
-  border-radius: 12px;
-  border: 1px solid var(--border, #e2e8f0);
-}
-.eyebrow {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted, #64748b);
-  margin: 0;
-}
-h2 {
-  margin: 0.25rem 0;
-}
-.button.secondary {
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-}
-</style>
