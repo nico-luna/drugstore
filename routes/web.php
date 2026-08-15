@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Identity\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,4 +22,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard/Index');
     })->name('dashboard');
+
+    // Usuarios Module (Fase 1B.3)
+    Route::middleware('permission:usuarios')->group(function () {
+        Route::get('/usuarios', [UserController::class, 'index'])->name('usuarios.index');
+        Route::post('/usuarios', [UserController::class, 'store'])->name('usuarios.store');
+        Route::put('/usuarios/{id}', [UserController::class, 'update'])->name('usuarios.update');
+        Route::post('/usuarios/{id}/toggle', [UserController::class, 'toggle'])->name('usuarios.toggle');
+    });
 });
