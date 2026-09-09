@@ -21,7 +21,15 @@
       class="stats-grid"
       aria-label="Indicadores"
     >
-      <!-- Stat cards will be populated in 1B.6 Dashboard -->
+      <Link
+        v-for="(card, idx) in cards"
+        :key="idx"
+        class="stat-card"
+        :href="card.target"
+      >
+        <span>{{ card.label }}</span>
+        <strong>{{ card.value }}</strong>
+      </Link>
     </section>
   </AppLayout>
 </template>
@@ -31,6 +39,16 @@ import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import type { PageProps, User } from '@/types';
+
+interface DashboardCard {
+  label: string;
+  value: string;
+  target: string;
+}
+
+defineProps<{
+  cards?: DashboardCard[];
+}>();
 
 const page = usePage<PageProps>();
 const user = computed<User | null>(() => page.props.auth?.user ?? null);

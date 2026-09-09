@@ -3,9 +3,9 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Customers\CustomerController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Identity\UserController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 Route::get('/', function () {
     return auth()->check()
@@ -21,9 +21,8 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard/Index');
-    })->name('dashboard');
+    // Dashboard Module (Fase 1B.6)
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     // Usuarios Module (Fase 1B.3)
     Route::middleware('permission:usuarios')->group(function () {
