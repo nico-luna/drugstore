@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Customers\CustomerController;
 use App\Http\Controllers\Identity\UserController;
 use Illuminate\Support\Facades\Route;
@@ -38,5 +39,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/clientes', [CustomerController::class, 'store'])->name('clientes.store');
         Route::put('/clientes/{id}', [CustomerController::class, 'update'])->name('clientes.update');
         Route::post('/clientes/{id}/toggle', [CustomerController::class, 'toggle'])->name('clientes.toggle');
+    });
+
+    // Productos Module (Fase 1B.5)
+    Route::middleware('permission:productos')->group(function () {
+        Route::get('/productos', [ProductController::class, 'index'])->name('productos.index');
+        Route::post('/productos', [ProductController::class, 'store'])->name('productos.store');
+        Route::put('/productos/{id}', [ProductController::class, 'update'])->name('productos.update');
+        Route::post('/productos/{id}/toggle', [ProductController::class, 'toggle'])->name('productos.toggle');
     });
 });
