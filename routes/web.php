@@ -5,6 +5,7 @@ use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Customers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Identity\UserController;
+use App\Http\Controllers\Sales\NewSaleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -46,5 +47,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/productos', [ProductController::class, 'store'])->name('productos.store');
         Route::put('/productos/{id}', [ProductController::class, 'update'])->name('productos.update');
         Route::post('/productos/{id}/toggle', [ProductController::class, 'toggle'])->name('productos.toggle');
+    });
+
+    // Nueva Venta Module (Fase 1B.7)
+    Route::middleware('permission:nueva_venta')->group(function () {
+        Route::get('/nueva-venta', [NewSaleController::class, 'create'])->name('sales.create');
+        Route::post('/nueva-venta', [NewSaleController::class, 'store'])->name('sales.store');
     });
 });
