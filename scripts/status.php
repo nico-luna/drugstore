@@ -7,9 +7,12 @@ if (PHP_SAPI !== 'cli') {
     exit;
 }
 
-require dirname(__DIR__) . '/app/bootstrap.php';
+require dirname(__DIR__) . '/vendor/autoload.php';
+$app = require_once dirname(__DIR__) . '/bootstrap/app.php';
+$app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
-$db = Database::connection();
+use Illuminate\Support\Facades\DB;
+
 $labels = [
     'usuario' => 'users',
     'cliente' => 'clients',
@@ -17,7 +20,13 @@ $labels = [
     'ventas' => 'sales',
 ];
 
-echo 'database_timezone=' . $db->query('SELECT @@session.time_zone')->fetchColumn() . PHP_EOL;
+$driver = DB::connection()->getDriverName();
+if ($driver === 'mysql') {
+    $tz = DB::select('SELECT @@session.time_zone as tz');
+    if (!empty($tz)) {
+        echo 'database_timezone=' . $tz[0]->tz . PHP_EOL;
+    }
+}
 foreach ($labels as $table => $label) {
-    echo $label . '=' . $db->query('SELECT COUNT(*) FROM ' . $table)->fetchColumn() . PHP_EOL;
+    echo $label . '=' . DB::table($table)->count() . PHP_EOL;
 }

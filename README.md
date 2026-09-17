@@ -31,8 +31,11 @@ Se requiere PHP 8.2 con `pdo_mysql` y una base MySQL 8/MariaDB compatible.
 ## Verificaciones
 
 ```powershell
-php tests/run.php
-Get-ChildItem -Recurse -Filter *.php | ForEach-Object { php -l $_.FullName }
+php artisan test
+npm run type-check
+npm run lint
+npm run build
+Get-ChildItem -Recurse -Filter *.php | Where-Object { $_.FullName -notmatch 'vendor|storage|node_modules' } | ForEach-Object { php -l $_.FullName }
 ```
 
 El volcado de 2022 se considera legado y no debe importarse directamente: contenía credenciales débiles, referencias huérfanas y fechas de venta mutables.
