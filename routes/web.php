@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Identity\UserController;
 use App\Http\Controllers\Sales\NewSaleController;
 use App\Http\Controllers\Sales\SaleHistoryController;
+use App\Http\Controllers\Settings\SettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -60,5 +61,11 @@ Route::middleware('auth')->group(function () {
     Route::middleware('permission:ventas')->group(function () {
         Route::get('/ventas', [SaleHistoryController::class, 'index'])->name('ventas.index');
         Route::post('/ventas/{id}/cancel', [SaleHistoryController::class, 'cancel'])->name('ventas.cancel');
+    });
+
+    // Configuracion Module (Fase 1B.9)
+    Route::middleware('permission:configuracion')->group(function () {
+        Route::get('/configuracion', [SettingsController::class, 'edit'])->name('configuracion.edit');
+        Route::put('/configuracion', [SettingsController::class, 'update'])->name('configuracion.update');
     });
 });
