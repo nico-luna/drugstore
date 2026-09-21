@@ -1,6 +1,8 @@
 # Drugstore
 
-Sistema web de gestión para clientes, productos, usuarios y ventas.
+Sistema web de gestión y punto de venta reconstruido en Laravel 13, Inertia y Vue 3.
+
+Para publicar una instancia de prueba en Hostinger, consultar [HOSTINGER_DEPLOY.md](HOSTINGER_DEPLOY.md).
 
 ## Inicio rápido con Docker
 
@@ -21,12 +23,13 @@ La contraseña debe tener al menos 12 caracteres, mayúsculas, minúsculas, núm
 
 ## Inicio con PHP local
 
-Se requiere PHP 8.2 con `pdo_mysql` y una base MySQL 8/MariaDB compatible.
+Se requiere PHP 8.4 con `pdo_mysql`, Composer 2, Node.js 22 y una base MySQL 8/MariaDB compatible.
 
-1. Crear la base e importar `database/schema.sql`.
-2. Configurar `.env` con el host y puerto reales de MySQL.
-3. Ejecutar `php scripts/create-admin.php` con `DRUGSTORE_ADMIN_PASSWORD` definido.
-4. Iniciar `php -S 127.0.0.1:8081 -t public`.
+1. Configurar `.env` con el host y puerto reales de MySQL.
+2. Ejecutar `composer install`, `npm ci` y `npm run build`.
+3. Ejecutar `php artisan migrate`.
+4. Ejecutar `php scripts/create-admin.php` con `DRUGSTORE_ADMIN_PASSWORD` definido.
+5. Iniciar `php -S 127.0.0.1:8081 -t public`.
 
 ## Verificaciones
 

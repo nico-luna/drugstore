@@ -1,0 +1,11 @@
+Options -Indexes
+
+<FilesMatch "^(\.env|artisan|composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml|phpstan\.neon)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^public/ - [L]
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

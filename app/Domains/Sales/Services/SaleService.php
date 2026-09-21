@@ -16,6 +16,8 @@ class SaleService
     /**
      * Creates a new sale in a database transaction with server-side price re-validation,
      * SELECT ... FOR UPDATE locking, and atomic stock decrements.
+     *
+     * @param array<int, array{producto_id: mixed, cantidad: mixed}> $rawLines
      */
     public function create(int $clientId, int $userId, array $rawLines): int
     {
@@ -151,6 +153,10 @@ class SaleService
         });
     }
 
+    /**
+     * @param array<int, array{producto_id: mixed, cantidad: mixed}> $rawLines
+     * @return array<int, int>
+     */
     private function normalizeLines(array $rawLines): array
     {
         $lines = [];

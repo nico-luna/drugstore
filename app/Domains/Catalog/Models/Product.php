@@ -3,11 +3,27 @@
 namespace App\Domains\Catalog\Models;
 
 use App\Domains\Identity\Models\User;
+use Database\Factories\ProductFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $codproducto
+ * @property string $codigo
+ * @property string $descripcion
+ * @property string $precio
+ * @property int $existencia
+ * @property bool $controla_stock
+ * @property int|null $usuario_id
+ * @property bool $estado
+ * @property-read User|null $user
+ */
 class Product extends Model
 {
+    /** @use HasFactory<ProductFactory> */
+    use HasFactory;
+
     protected $table = 'producto';
     protected $primaryKey = 'codproducto';
 
@@ -34,6 +50,12 @@ class Product extends Model
         ];
     }
 
+    protected static function newFactory(): ProductFactory
+    {
+        return ProductFactory::new();
+    }
+
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id', 'idusuario');

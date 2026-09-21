@@ -15,8 +15,11 @@ use Inertia\Response;
 
 class UserController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): Response|RedirectResponse
     {
+        $currentUser = $request->user();
+        abort_unless($currentUser instanceof User, 401);
+
         $users = User::orderByDesc('estado')
             ->orderBy('nombre')
             ->get(['idusuario', 'nombre', 'correo', 'usuario', 'es_admin', 'estado']);
@@ -24,11 +27,10 @@ class UserController extends Controller
         $permissions = Permission::orderBy('id')->get(['id', 'nombre', 'etiqueta']);
 
         $editing = null;
-        $editId = $request->query('edit');
-        if ($editId) {
+        $editId = filter_var($request->query('edit'), FILTER_VALIDATE_INT);
+        if ($editId !== false) {
             $userToEdit = User::with('permissions')->find($editId);
             if ($userToEdit) {
-                $currentUser = $request->user();
                 if ($userToEdit->es_admin && !$currentUser->es_admin) {
                     return back()->with('error', 'Solo otro administrador puede modificar esa cuenta.');
                 }
@@ -54,6 +56,7 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $currentUser = $request->user();
+        abort_unless($currentUser instanceof User, 401);
 
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
@@ -99,6 +102,8 @@ class UserController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $currentUser = $request->user();
+        abort_unless($currentUser instanceof User, 401);
+
         $user = User::findOrFail($id);
 
         if ($user->es_admin && !$currentUser->es_admin) {
@@ -162,6 +167,8 @@ class UserController extends Controller
     public function toggle(Request $request, int $id): RedirectResponse
     {
         $currentUser = $request->user();
+        abort_unless($currentUser instanceof User, 401);
+
         $user = User::findOrFail($id);
 
         if ($user->idusuario === $currentUser->idusuario) {

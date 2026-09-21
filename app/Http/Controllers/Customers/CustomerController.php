@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customers;
 
 use App\Http\Controllers\Controller;
 use App\Domains\Customers\Models\Customer;
+use App\Domains\Identity\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -44,6 +45,9 @@ class CustomerController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
         $validated = $request->validate([
             'nombre' => ['required', 'string', 'max:100'],
             'telefono' => ['nullable', 'string', 'max:30'],
@@ -59,7 +63,7 @@ class CustomerController extends Controller
             'nombre' => $validated['nombre'],
             'telefono' => $validated['telefono'] ?? '',
             'direccion' => $validated['direccion'] ?? '',
-            'usuario_id' => $request->user()->idusuario,
+            'usuario_id' => $user->idusuario,
             'estado' => true,
         ]);
 

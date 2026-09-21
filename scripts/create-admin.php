@@ -39,7 +39,8 @@ $exists = DB::table('usuario')
     ->count();
 
 if ($exists > 0) {
-    throw new RuntimeException('Ya existe una cuenta con ese usuario o correo. No se modificó ninguna contraseña.');
+    fwrite(STDOUT, 'El administrador ya existe; no se modificó ninguna contraseña.' . PHP_EOL);
+    exit(0);
 }
 
 DB::table('usuario')->insert([

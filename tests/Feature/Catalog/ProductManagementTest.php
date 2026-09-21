@@ -43,7 +43,7 @@ test('authorized user can access products index and see list', function () {
         'precio' => 3000.00,
         'existencia' => 15,
         'controla_stock' => true,
-        'usuario_id' => $admin->idusuario,
+        'usuario_id' => $user->idusuario,
         'estado' => true,
     ]);
 

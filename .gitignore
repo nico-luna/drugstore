@@ -5,7 +5,15 @@
 !/storage/logs/.gitkeep
 !/storage/sessions/.gitkeep
 /node_modules
-/public/build
 /vendor
 /.vite
+/bootstrap/cache/*.php
+/storage/framework/cache/data/*
+/storage/framework/views/*.php
+/storage/framework/sessions/*
+!/bootstrap/cache/.gitkeep
+!/storage/framework/cache/data/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/framework/sessions/.gitkeep
+/hostinger-release.zip
 .DS_Store

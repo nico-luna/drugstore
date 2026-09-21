@@ -2,13 +2,26 @@
 
 namespace App\Domains\Identity\Models;
 
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property int $idusuario
+ * @property string $nombre
+ * @property string $correo
+ * @property string $usuario
+ * @property string $clave
+ * @property bool $es_admin
+ * @property bool $estado
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Permission> $permissions
+ */
 class User extends Authenticatable
 {
-    use Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, Notifiable;
 
     protected $table = 'usuario';
     protected $primaryKey = 'idusuario';
@@ -38,11 +51,17 @@ class User extends Authenticatable
         ];
     }
 
+    protected static function newFactory(): UserFactory
+    {
+        return UserFactory::new();
+    }
+
     public function getAuthPassword(): string
     {
         return $this->clave;
     }
 
+    /** @return BelongsToMany<Permission, $this> */
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -64,12 +83,21 @@ class User extends Authenticatable
         return $this->permissions->contains('nombre', $permission);
     }
 
+    /** @return array<int, string> */
     public function getPermissionsList(): array
     {
         if ($this->es_admin) {
-            return Permission::pluck('nombre')->toArray();
+            return Permission::query()
+                ->pluck('nombre')
+                ->map(static fn (mixed $permission): string => (string) $permission)
+                ->values()
+                ->all();
         }
 
-        return $this->permissions->pluck('nombre')->toArray();
+        return $this->permissions
+            ->pluck('nombre')
+            ->map(static fn (mixed $permission): string => (string) $permission)
+            ->values()
+            ->all();
     }
 }

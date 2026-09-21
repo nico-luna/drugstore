@@ -19,11 +19,11 @@ function histUser(bool $ventas = true, bool $nuevaVenta = false): User
     $user = User::factory()->create(['es_admin' => false, 'estado' => true]);
     if ($ventas) {
         $perm = Permission::firstOrCreate(['nombre' => 'ventas']);
-        $user->permissions()->attach($perm->idpermiso);
+        $user->permissions()->attach($perm->id);
     }
     if ($nuevaVenta) {
         $perm = Permission::firstOrCreate(['nombre' => 'nueva_venta']);
-        $user->permissions()->attach($perm->idpermiso);
+        $user->permissions()->attach($perm->id);
     }
     return $user;
 }
@@ -103,8 +103,7 @@ test('TC-CANCEL-02: cancelling an already-cancelled sale flashes error', functio
     [$sale] = makeSale($user, estado: 'anulada');
 
     $response = $this->actingAs($user)->post("/ventas/{$sale->id}/cancel");
-    $response->assertRedirect();
-    $this->followRedirects($response)->assertSessionHas('error');
+    $response->assertRedirect()->assertSessionHas('error');
 });
 
 // ---------------------------------------------------------------------------

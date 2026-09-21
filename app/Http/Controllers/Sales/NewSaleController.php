@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sales;
 use App\Http\Controllers\Controller;
 use App\Domains\Customers\Models\Customer;
 use App\Domains\Catalog\Models\Product;
+use App\Domains\Identity\Models\User;
 use App\Domains\Sales\Services\SaleService;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +42,9 @@ class NewSaleController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
         $request->validate([
             'cliente_id' => ['required', 'integer'],
             'producto_id' => ['required', 'array', 'min:1'],
@@ -67,7 +71,7 @@ class NewSaleController extends Controller
         try {
             $saleId = $this->saleService->create(
                 (int) $request->input('cliente_id'),
-                (int) $request->user()->idusuario,
+                $user->idusuario,
                 $lines
             );
 

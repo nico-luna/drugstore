@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domains\Customers\Models\Customer;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Sales\Models\Sale;
+use App\Domains\Identity\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,6 +15,8 @@ class DashboardController extends Controller
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
         $cards = [];
 
         if ($user->hasPermission('clientes')) {

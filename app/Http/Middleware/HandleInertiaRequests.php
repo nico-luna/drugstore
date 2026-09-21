@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domains\Identity\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -29,16 +30,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
         return array_merge(parent::share($request), [
             'auth' => [
-                'user' => $request->user() ? [
-                    'idusuario' => $request->user()->idusuario,
-                    'nombre' => $request->user()->nombre,
-                    'correo' => $request->user()->correo,
-                    'usuario' => $request->user()->usuario,
-                    'es_admin' => (bool) $request->user()->es_admin,
-                    'estado' => (bool) $request->user()->estado,
-                    'permisos' => method_exists($request->user(), 'getPermissionsAttribute') ? $request->user()->permissions : [],
+                'user' => $user instanceof User ? [
+                    'idusuario' => $user->idusuario,
+                    'nombre' => $user->nombre,
+                    'correo' => $user->correo,
+                    'usuario' => $user->usuario,
+                    'es_admin' => $user->es_admin,
+                    'estado' => $user->estado,
+                    'permisos' => $user->getPermissionsList(),
                 ] : null,
             ],
             'flash' => [

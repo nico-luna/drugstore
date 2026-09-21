@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Domains\Catalog\Models\Product;
+use App\Domains\Identity\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -44,6 +45,9 @@ class ProductController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
         $validated = $request->validate([
             'codigo' => ['required', 'string', 'max:50', 'unique:producto,codigo'],
             'descripcion' => ['required', 'string', 'max:200'],
@@ -68,7 +72,7 @@ class ProductController extends Controller
             'precio' => $validated['precio'],
             'existencia' => $validated['existencia'],
             'controla_stock' => !empty($validated['controla_stock']),
-            'usuario_id' => $request->user()->idusuario,
+            'usuario_id' => $user->idusuario,
             'estado' => true,
         ]);
 

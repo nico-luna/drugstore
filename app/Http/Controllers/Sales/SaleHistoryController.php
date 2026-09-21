@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Sales;
 
 use App\Domains\Sales\Models\Sale;
+use App\Domains\Sales\Models\SaleItem;
+use App\Domains\Customers\Models\Customer;
+use App\Domains\Catalog\Models\Product;
+use App\Domains\Identity\Models\User;
 use App\Domains\Sales\Services\SaleService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -19,8 +23,8 @@ class SaleHistoryController extends Controller
 
     public function index(Request $request): Response
     {
-        $desde  = $request->query('desde', now()->startOfMonth()->format('Y-m-d'));
-        $hasta  = $request->query('hasta', now()->format('Y-m-d'));
+        $desde  = $request->string('desde', now()->startOfMonth()->format('Y-m-d'))->toString();
+        $hasta  = $request->string('hasta', now()->format('Y-m-d'))->toString();
         $viewId = $request->query('view');
 
         $sales = Sale::with(['customer', 'user'])
@@ -31,9 +35,9 @@ class SaleHistoryController extends Controller
             ->get()
             ->map(fn (Sale $s) => [
                 'id'       => $s->id,
-                'fecha'    => $s->fecha?->format('Y-m-d H:i'),
-                'cliente'  => $s->customer?->nombre ?? '—',
-                'vendedor' => $s->user?->nombre ?? '—',
+                'fecha'    => $s->fecha->format('Y-m-d H:i'),
+                'cliente'  => $s->customer instanceof Customer ? $s->customer->nombre : '—',
+                'vendedor' => $s->user instanceof User ? $s->user->nombre : '—',
                 'total'    => (float) $s->total,
                 'estado'   => $s->estado,
             ]);
@@ -46,15 +50,15 @@ class SaleHistoryController extends Controller
             if ($sale) {
                 $detail = [
                     'id'          => $sale->id,
-                    'fecha'       => $sale->fecha?->format('Y-m-d H:i'),
-                    'cliente'     => $sale->customer?->nombre ?? '—',
-                    'vendedor'    => $sale->user?->nombre ?? '—',
+                    'fecha'       => $sale->fecha->format('Y-m-d H:i'),
+                    'cliente'     => $sale->customer instanceof Customer ? $sale->customer->nombre : '—',
+                    'vendedor'    => $sale->user instanceof User ? $sale->user->nombre : '—',
                     'total'       => (float) $sale->total,
                     'estado'      => $sale->estado,
                     'anulada_at'  => $sale->anulada_at?->format('Y-m-d H:i'),
                     'anulada_por' => $sale->cancelledBy?->nombre,
-                    'items'       => $sale->items->map(fn ($item) => [
-                        'producto' => $item->product?->descripcion ?? '—',
+                    'items'       => $sale->items->map(fn (SaleItem $item) => [
+                        'producto' => $item->product instanceof Product ? $item->product->descripcion : '—',
                         'cantidad' => (int) $item->cantidad,
                         'precio'   => (float) $item->precio,
                         'subtotal' => (float) $item->subtotal,

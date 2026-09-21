@@ -16,7 +16,7 @@ function settingsUser(bool $withPerm = true): User
     $user = User::factory()->create(['es_admin' => false, 'estado' => true]);
     if ($withPerm) {
         $perm = Permission::firstOrCreate(['nombre' => 'configuracion']);
-        $user->permissions()->attach($perm->idpermiso);
+        $user->permissions()->attach($perm->id);
     }
     return $user;
 }
@@ -74,8 +74,9 @@ test('TC-CONF-01: valid update persists all fields and lowercases email', functi
         'direccion' => 'Calle Falsa 123',
     ]);
 
-    $response->assertRedirect(route('configuracion.edit'));
-    $this->followRedirects($response)->assertSessionHas('success');
+    $response
+        ->assertRedirect(route('configuracion.edit'))
+        ->assertSessionHas('success');
 
     $row = DB::table('configuracion')->where('id', 1)->first();
     expect($row->nombre)->toBe('Farmacia Nueva')

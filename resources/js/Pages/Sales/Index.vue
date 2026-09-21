@@ -120,7 +120,10 @@ function formatMoney(value: number): string {
     >
       <div class="card-header">
         <strong>Comprobante #{{ detail.id }}</strong>
-        <StatusBadge :status="detail.estado" />
+        <StatusBadge
+          :active="detail.estado === 'confirmada'"
+          :label="detail.estado === 'confirmada' ? 'Confirmada' : 'Anulada'"
+        />
         <button
           class="btn btn-sm btn-secondary ml-auto"
           @click="closeDetail"
@@ -236,7 +239,12 @@ function formatMoney(value: number): string {
               <td class="text-right">
                 {{ formatMoney(sale.total) }}
               </td>
-              <td><StatusBadge :status="sale.estado" /></td>
+              <td>
+                <StatusBadge
+                  :active="sale.estado === 'confirmada'"
+                  :label="sale.estado === 'confirmada' ? 'Confirmada' : 'Anulada'"
+                />
+              </td>
               <td>
                 <button
                   class="btn btn-sm btn-secondary"
