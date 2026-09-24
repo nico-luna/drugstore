@@ -161,7 +161,12 @@ class OrganizationController extends Controller
         if ($membership->role === 'owner' && $this->tenant->membership()->role !== 'owner') {
             throw ValidationException::withMessages(['role' => 'Sólo otro propietario puede modificar ese acceso.']);
         }
-        if (!in_array((int) $validated['default_store_id'], array_map('intval', $validated['store_ids']), true)) {
+        $selectedStoreIds = array_values(array_unique(array_map(
+            static fn (mixed $storeId): int => (int) $storeId,
+            (array) $validated['store_ids'],
+        )));
+
+        if (!in_array((int) $validated['default_store_id'], $selectedStoreIds, true)) {
             throw ValidationException::withMessages(['default_store_id' => 'La tienda predeterminada debe estar habilitada para el usuario.']);
         }
         if ($membership->user_id === $this->tenant->membership()->user_id && !$validated['is_active']) {
@@ -179,7 +184,7 @@ class OrganizationController extends Controller
             }
         }
 
-        DB::transaction(function () use ($membership, $validated, $storeIds): void {
+        DB::transaction(function () use ($membership, $validated, $storeIds, $selectedStoreIds): void {
             $membership->update([
                 'role' => $validated['role'],
                 'is_active' => $validated['is_active'],
@@ -192,12 +197,12 @@ class OrganizationController extends Controller
                 ->delete();
 
             $now = now();
-            DB::table('store_user')->insert(collect($validated['store_ids'])->unique()->map(fn (mixed $storeId): array => [
-                'store_id' => (int) $storeId,
+            DB::table('store_user')->insert(array_map(fn (int $storeId): array => [
+                'store_id' => $storeId,
                 'user_id' => $membership->user_id,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ])->all());
+            ], $selectedStoreIds));
         });
 
         return back()->with('success', 'Acceso del usuario actualizado.');
