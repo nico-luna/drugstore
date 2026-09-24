@@ -1,6 +1,7 @@
 <?php
 
 use App\Domains\Catalog\Models\Product;
+use App\Domains\Catalog\Models\StoreInventory;
 use App\Domains\Customers\Models\Customer;
 use App\Domains\Identity\Models\Permission;
 use App\Domains\Identity\Models\User;
@@ -82,8 +83,9 @@ test('TC-CANCEL-01: cancelling a confirmed sale restores stock and marks anulada
 
     [$sale, $product] = makeSale($seller, stock: true);
     // Simulate stock already decremented by the sale
-    $product->decrement('existencia', 1);
-    $stockBefore = (int) $product->fresh()->existencia;
+    $inventory = StoreInventory::where('product_id', $product->codproducto)->firstOrFail();
+    $inventory->decrement('stock', 1);
+    $stockBefore = (int) $inventory->fresh()->stock;
 
     $this->actingAs($canceller)
         ->post("/ventas/{$sale->id}/cancel")
@@ -91,7 +93,7 @@ test('TC-CANCEL-01: cancelling a confirmed sale restores stock and marks anulada
 
     expect($sale->fresh()->estado)->toBe('anulada')
         ->and($sale->fresh()->anulada_por)->toBe($canceller->idusuario)
-        ->and((int) $product->fresh()->existencia)->toBe($stockBefore + 1);
+        ->and((int) $inventory->fresh()->stock)->toBe($stockBefore + 1);
 });
 
 // ---------------------------------------------------------------------------

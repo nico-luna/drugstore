@@ -83,6 +83,16 @@
             </label>
           </div>
 
+          <div class="form-group">
+            <label class="check-row">
+              <input
+                v-model="form.is_available"
+                type="checkbox"
+              >
+              Disponible para venta en esta tienda
+            </label>
+          </div>
+
           <div class="button-row">
             <button
               class="button primary"
@@ -136,6 +146,7 @@
                 <th>Descripción</th>
                 <th>Precio</th>
                 <th>Stock</th>
+                <th>Tienda</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -156,6 +167,12 @@
                   >Sin control</span>
                 </td>
                 <td>
+                  <StatusBadge
+                    :active="Boolean(p.is_available)"
+                    :label="p.is_available ? 'Disponible' : 'No disponible'"
+                  />
+                </td>
+                <td>
                   <StatusBadge :active="Boolean(p.estado)" />
                 </td>
                 <td class="actions">
@@ -173,7 +190,7 @@
               </tr>
               <tr v-if="products.length === 0">
                 <td
-                  colspan="6"
+                  colspan="7"
                   class="empty-state"
                 >
                   No hay productos para mostrar.
@@ -201,6 +218,7 @@ interface ProductItem {
   existencia: number;
   controla_stock: boolean;
   estado: boolean;
+  is_available: boolean;
 }
 
 const props = defineProps<{
@@ -217,6 +235,7 @@ const form = useForm({
   precio: props.editing?.precio !== undefined ? props.editing.precio : '',
   existencia: props.editing?.existencia !== undefined ? props.editing.existencia : 0,
   controla_stock: props.editing ? Boolean(props.editing.controla_stock) : true,
+  is_available: props.editing ? Boolean(props.editing.is_available) : true,
 });
 
 const formatMoney = (val: number | string): string => {

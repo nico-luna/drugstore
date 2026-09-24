@@ -4,6 +4,7 @@ namespace App\Domains\Sales\Services;
 
 use App\Domains\Customers\Models\Customer;
 use App\Domains\Catalog\Models\Product;
+use App\Domains\Catalog\Models\StoreInventory;
 use App\Domains\Sales\Models\Sale;
 use App\Domains\Sales\Models\SaleItem;
 use App\Tenancy\CurrentTenant;
@@ -61,13 +62,33 @@ class SaleService
                 throw new InvalidArgumentException('Uno de los productos ya no está disponible.');
             }
 
+            $inventoryQuery = StoreInventory::query()
+                ->where('is_available', true)
+                ->whereIn('product_id', $ids);
+
+            if (!$isSqlite) {
+                $inventoryQuery->lockForUpdate();
+            }
+
+            $inventoryByProduct = $inventoryQuery
+                ->get(['product_id', 'price', 'stock'])
+                ->keyBy('product_id');
+
+            if ($inventoryByProduct->count() !== count($ids)) {
+                throw new InvalidArgumentException('Uno de los productos no está disponible en esta tienda.');
+            }
+
             $total = 0.0;
             foreach ($lines as $productId => $quantity) {
                 $product = $found[$productId];
-                if ((bool) $product->controla_stock && (int) $product->existencia < $quantity) {
+                $inventory = $inventoryByProduct->get($productId);
+                if (!$inventory) {
+                    throw new InvalidArgumentException('Uno de los productos no está disponible en esta tienda.');
+                }
+                if ((bool) $product->controla_stock && (int) $inventory->stock < $quantity) {
                     throw new InvalidArgumentException('Stock insuficiente para ' . $product->descripcion . '.');
                 }
-                $total += round((float) $product->precio * $quantity, 2);
+                $total += round((float) $inventory->price * $quantity, 2);
             }
 
             $sale = Sale::create([
@@ -84,22 +105,27 @@ class SaleService
 
             foreach ($lines as $productId => $quantity) {
                 $product = $found[$productId];
-                $subtotal = round((float) $product->precio * $quantity, 2);
+                $inventory = $inventoryByProduct->get($productId);
+                if (!$inventory) {
+                    throw new InvalidArgumentException('Uno de los productos no está disponible en esta tienda.');
+                }
+                $subtotal = round((float) $inventory->price * $quantity, 2);
 
                 SaleItem::create([
                     'id_producto' => $productId,
                     'id_venta' => $saleId,
                     'cantidad' => $quantity,
-                    'precio' => $product->precio,
+                    'precio' => $inventory->price,
                     'subtotal' => number_format($subtotal, 2, '.', ''),
                 ]);
 
                 if ((bool) $product->controla_stock) {
-                    $affected = DB::table('producto')
+                    $affected = DB::table('store_inventory')
                         ->where('account_id', $this->tenant->accountId())
-                        ->where('codproducto', $productId)
-                        ->where('existencia', '>=', $quantity)
-                        ->decrement('existencia', $quantity);
+                        ->where('store_id', $this->tenant->storeId())
+                        ->where('product_id', $productId)
+                        ->where('stock', '>=', $quantity)
+                        ->decrement('stock', $quantity);
 
                     if ($affected !== 1) {
                         throw new RuntimeException('El stock cambió durante la venta. Volvé a intentarlo.');
@@ -140,10 +166,11 @@ class SaleService
 
             foreach ($items as $item) {
                 if ($item->product && (bool) $item->product->controla_stock) {
-                    DB::table('producto')
+                    DB::table('store_inventory')
                         ->where('account_id', $this->tenant->accountId())
-                        ->where('codproducto', $item->id_producto)
-                        ->increment('existencia', (int) $item->cantidad);
+                        ->where('store_id', $this->tenant->storeId())
+                        ->where('product_id', $item->id_producto)
+                        ->increment('stock', (int) $item->cantidad);
                 }
             }
 

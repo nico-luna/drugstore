@@ -9,6 +9,9 @@ use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Tenancy\CurrentTenant;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * @property int $codproducto
@@ -21,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $usuario_id
  * @property bool $estado
  * @property-read User|null $user
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, StoreInventory> $inventories
  */
 class Product extends Model
 {
@@ -59,6 +63,29 @@ class Product extends Model
         return ProductFactory::new();
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (Product $product): void {
+            $tenant = app(CurrentTenant::class);
+            if (!$tenant->workspaceResolved() || !Schema::hasTable('store_inventory')) {
+                return;
+            }
+
+            StoreInventory::withoutGlobalScopes()->firstOrCreate(
+                [
+                    'store_id' => $tenant->storeId(),
+                    'product_id' => $product->codproducto,
+                ],
+                [
+                    'account_id' => $tenant->accountId(),
+                    'price' => $product->precio,
+                    'stock' => $product->existencia,
+                    'is_available' => true,
+                ],
+            );
+        });
+    }
+
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
@@ -69,5 +96,11 @@ class Product extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    /** @return HasMany<StoreInventory, $this> */
+    public function inventories(): HasMany
+    {
+        return $this->hasMany(StoreInventory::class, 'product_id', 'codproducto');
     }
 }
