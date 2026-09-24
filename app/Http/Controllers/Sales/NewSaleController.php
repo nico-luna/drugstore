@@ -27,12 +27,27 @@ class NewSaleController extends Controller
             ->get(['idcliente', 'nombre']);
 
         $products = Product::where('estado', true)
-            ->where(function ($q) {
-                $q->where('controla_stock', false)
-                  ->orWhere('existencia', '>', 0);
-            })
+            ->whereHas('inventories', fn ($query) => $query->where('is_available', true))
+            ->with('inventories')
             ->orderBy('descripcion')
-            ->get(['codproducto', 'codigo', 'descripcion', 'precio', 'existencia', 'controla_stock']);
+            ->get(['codproducto', 'codigo', 'descripcion', 'controla_stock'])
+            ->map(function (Product $product): ?array {
+                $inventory = $product->inventories->first();
+                if (!$inventory || ($product->controla_stock && $inventory->stock < 1)) {
+                    return null;
+                }
+
+                return [
+                    'codproducto' => $product->codproducto,
+                    'codigo' => $product->codigo,
+                    'descripcion' => $product->descripcion,
+                    'precio' => $inventory->price,
+                    'existencia' => $inventory->stock,
+                    'controla_stock' => (bool) $product->controla_stock,
+                ];
+            })
+            ->filter()
+            ->values();
 
         return Inertia::render('Sales/Create', [
             'clients' => $clients,

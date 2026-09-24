@@ -4,6 +4,7 @@ use App\Domains\Identity\Models\User;
 use App\Domains\Identity\Models\Permission;
 use App\Domains\Customers\Models\Customer;
 use App\Domains\Catalog\Models\Product;
+use App\Domains\Catalog\Models\StoreInventory;
 use App\Domains\Sales\Models\Sale;
 use App\Domains\Sales\Models\SaleItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,8 +60,8 @@ test('TC-SALE-01: valid sale creation with stock discount and server-side price 
     expect($sale->items)->toHaveCount(2);
 
     // Check stock decrement
-    expect($prodWithStock->fresh()->existencia)->toBe(8);
-    expect($prodNoStockCtrl->fresh()->existencia)->toBe(0);
+    expect(StoreInventory::where('product_id', $prodWithStock->codproducto)->value('stock'))->toBe(8);
+    expect(StoreInventory::where('product_id', $prodNoStockCtrl->codproducto)->value('stock'))->toBe(0);
 
     $response->assertRedirect("/ventas?view={$sale->id}");
 });
@@ -96,7 +97,7 @@ test('TC-SALE-02: insufficient stock aborts sale and rolls back completely', fun
     // Invariant: no sale created and stock untouched
     expect(Sale::count())->toBe(0);
     expect(SaleItem::count())->toBe(0);
-    expect($product->fresh()->existencia)->toBe(2);
+    expect(StoreInventory::where('product_id', $product->codproducto)->value('stock'))->toBe(2);
 });
 
 test('TC-SALE-03: inactive product is rejected and rolls back sale', function () {
@@ -197,5 +198,5 @@ test('TC-SALE-05: duplicate lines for same product are consolidated properly', f
     $sale = Sale::first();
     expect($sale)->not->toBeNull();
     expect((float) $sale->total)->toBe(2500.00);
-    expect($product->fresh()->existencia)->toBe(5);
+    expect(StoreInventory::where('product_id', $product->codproducto)->value('stock'))->toBe(5);
 });

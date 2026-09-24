@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Catalog;
 
 use App\Http\Controllers\Controller;
 use App\Domains\Catalog\Models\Product;
+use App\Domains\Catalog\Models\StoreInventory;
 use App\Domains\Identity\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Tenancy\CurrentTenant;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -22,7 +24,7 @@ class ProductController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
 
-        $query = Product::query();
+        $query = Product::query()->with('inventories');
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -34,12 +36,14 @@ class ProductController extends Controller
         $products = $query->orderByDesc('estado')
             ->orderBy('descripcion')
             ->limit(200)
-            ->get();
+            ->get()
+            ->map(fn (Product $product): array => $this->productPayload($product));
 
         $editing = null;
-        $editId = $request->query('edit');
-        if ($editId) {
-            $editing = Product::find($editId);
+        $editId = filter_var($request->query('edit'), FILTER_VALIDATE_INT);
+        if ($editId !== false) {
+            $product = Product::with('inventories')->whereKey($editId)->first();
+            $editing = $product ? $this->productPayload($product) : null;
         }
 
         return Inertia::render('Products/Index', [
@@ -66,6 +70,7 @@ class ProductController extends Controller
             'precio' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'existencia' => ['required', 'integer', 'min:0'],
             'controla_stock' => ['nullable', 'boolean'],
+            'is_available' => ['nullable', 'boolean'],
         ], [
             'codigo.required' => 'El código es obligatorio y admite hasta 50 caracteres.',
             'codigo.unique' => 'Ya existe un producto con ese código.',
@@ -78,15 +83,25 @@ class ProductController extends Controller
             'existencia.min' => 'La existencia debe ser un entero mayor o igual a cero.',
         ]);
 
-        Product::create([
-            'codigo' => $validated['codigo'],
-            'descripcion' => $validated['descripcion'],
-            'precio' => $validated['precio'],
-            'existencia' => $validated['existencia'],
-            'controla_stock' => !empty($validated['controla_stock']),
-            'usuario_id' => $user->idusuario,
-            'estado' => true,
-        ]);
+        $isAvailable = array_key_exists('is_available', $validated)
+            ? (bool) $validated['is_available']
+            : true;
+
+        DB::transaction(function () use ($validated, $user, $isAvailable): void {
+            $product = Product::create([
+                'codigo' => $validated['codigo'],
+                'descripcion' => $validated['descripcion'],
+                'precio' => $validated['precio'],
+                'existencia' => $validated['existencia'],
+                'controla_stock' => !empty($validated['controla_stock']),
+                'usuario_id' => $user->idusuario,
+                'estado' => true,
+            ]);
+
+            StoreInventory::query()
+                ->where('product_id', $product->codproducto)
+                ->update(['is_available' => $isAvailable]);
+        });
 
         return redirect()->route('productos.index')->with('success', 'Producto creado.');
     }
@@ -108,6 +123,7 @@ class ProductController extends Controller
             'precio' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'existencia' => ['required', 'integer', 'min:0'],
             'controla_stock' => ['nullable', 'boolean'],
+            'is_available' => ['nullable', 'boolean'],
         ], [
             'codigo.required' => 'El código es obligatorio y admite hasta 50 caracteres.',
             'codigo.unique' => 'Ya existe un producto con ese código.',
@@ -120,13 +136,32 @@ class ProductController extends Controller
             'existencia.min' => 'La existencia debe ser un entero mayor o igual a cero.',
         ]);
 
-        $product->update([
-            'codigo' => $validated['codigo'],
-            'descripcion' => $validated['descripcion'],
-            'precio' => $validated['precio'],
-            'existencia' => $validated['existencia'],
-            'controla_stock' => !empty($validated['controla_stock']),
-        ]);
+        $isAvailable = array_key_exists('is_available', $validated)
+            ? (bool) $validated['is_available']
+            : true;
+
+        DB::transaction(function () use ($product, $validated, $isAvailable): void {
+            $product->update([
+                'codigo' => $validated['codigo'],
+                'descripcion' => $validated['descripcion'],
+                'precio' => $validated['precio'],
+                'existencia' => $validated['existencia'],
+                'controla_stock' => !empty($validated['controla_stock']),
+            ]);
+
+            StoreInventory::query()->updateOrCreate(
+                [
+                    'product_id' => $product->codproducto,
+                    'store_id' => $this->tenant->storeId(),
+                ],
+                [
+                    'account_id' => $this->tenant->accountId(),
+                    'price' => $validated['precio'],
+                    'stock' => $validated['existencia'],
+                    'is_available' => $isAvailable,
+                ],
+            );
+        });
 
         return redirect()->route('productos.index')->with('success', 'Producto actualizado.');
     }
@@ -137,5 +172,31 @@ class ProductController extends Controller
         $product->update(['estado' => !$product->estado]);
 
         return back()->with('success', 'Estado del producto actualizado.');
+    }
+
+    /** @return array<string, mixed> */
+    private function productPayload(Product $product): array
+    {
+        $inventory = $product->inventories->first();
+        $price = '0.00';
+        $stock = 0;
+        $isAvailable = false;
+
+        if ($inventory instanceof StoreInventory) {
+            $price = $inventory->price;
+            $stock = $inventory->stock;
+            $isAvailable = $inventory->is_available;
+        }
+
+        return [
+            'codproducto' => $product->codproducto,
+            'codigo' => $product->codigo,
+            'descripcion' => $product->descripcion,
+            'precio' => $price,
+            'existencia' => $stock,
+            'controla_stock' => (bool) $product->controla_stock,
+            'estado' => (bool) $product->estado,
+            'is_available' => (bool) $isAvailable,
+        ];
     }
 }
