@@ -31,6 +31,13 @@
         </p>
 
         <div
+          v-if="success"
+          class="alert success"
+          role="status"
+        >
+          {{ success }}
+        </div>
+        <div
           v-if="form.errors.usuario"
           class="alert error"
           role="alert"
@@ -68,6 +75,12 @@
             >
           </div>
 
+          <div class="login-forgot">
+            <Link href="/olvide-mi-clave">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+
           <button
             class="button primary full"
             type="submit"
@@ -87,7 +100,12 @@
 </template>
 
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
+import type { PageProps } from '@/types';
+
+const page = usePage<PageProps>();
+const success = computed(() => page.props.flash?.success);
 
 const form = useForm({
   usuario: '',

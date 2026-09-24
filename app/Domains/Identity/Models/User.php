@@ -9,6 +9,8 @@ use App\Tenancy\CurrentTenant;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
+use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,13 +22,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $usuario
  * @property string $clave
  * @property bool $es_admin
+ * @property bool $is_platform_admin
  * @property bool $estado
  * @property-read \Illuminate\Database\Eloquent\Collection<int, Permission> $permissions
  */
-class User extends Authenticatable
+class User extends Authenticatable implements CanResetPasswordContract
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use CanResetPassword, HasFactory, Notifiable;
 
     protected $table = 'usuario';
     protected $primaryKey = 'idusuario';
@@ -40,6 +43,7 @@ class User extends Authenticatable
         'usuario',
         'clave',
         'es_admin',
+        'is_platform_admin',
         'estado',
     ];
 
@@ -52,6 +56,7 @@ class User extends Authenticatable
     {
         return [
             'es_admin' => 'boolean',
+            'is_platform_admin' => 'boolean',
             'estado' => 'boolean',
         ];
     }
@@ -98,6 +103,16 @@ class User extends Authenticatable
     public function getAuthPassword(): string
     {
         return $this->clave;
+    }
+
+    public function getEmailForPasswordReset(): string
+    {
+        return $this->correo;
+    }
+
+    public function routeNotificationForMail(): string
+    {
+        return $this->correo;
     }
 
     /** @return BelongsToMany<Permission, $this> */

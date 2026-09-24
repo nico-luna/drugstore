@@ -4,6 +4,7 @@ export interface User {
     correo: string;
     usuario: string;
     es_admin: boolean;
+    is_platform_admin: boolean;
     estado: boolean;
     role: string | null;
     permisos: string[];

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Catalog\ProductController;
 use App\Http\Controllers\Customers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Tenancy\TenantContextController;
 use App\Http\Controllers\Tenancy\OrganizationController;
 use App\Http\Controllers\PublicSiteController;
+use App\Http\Controllers\Platform\OnboardingRequestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicSiteController::class, 'home'])->name('home');
@@ -22,12 +24,23 @@ Route::post('/solicitar-acceso', [PublicSiteController::class, 'storeRequest'])
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
     Route::post('/login', [LoginController::class, 'store']);
+    Route::get('/olvide-mi-clave', [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/olvide-mi-clave', [PasswordResetController::class, 'email'])
+        ->middleware('throttle:5,10')
+        ->name('password.email');
+    Route::get('/restablecer-clave/{token}', [PasswordResetController::class, 'reset'])->name('password.reset');
+    Route::post('/restablecer-clave', [PasswordResetController::class, 'update'])->name('password.update');
 });
 
 Route::middleware('auth')->post('/logout', [LoginController::class, 'destroy'])->name('logout');
 
 Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('/contexto', [TenantContextController::class, 'update'])->name('tenant.context.update');
+
+    Route::middleware('platform-admin')->prefix('plataforma')->name('platform.')->group(function () {
+        Route::get('/solicitudes', [OnboardingRequestController::class, 'index'])->name('requests.index');
+        Route::put('/solicitudes/{id}', [OnboardingRequestController::class, 'update'])->name('requests.update');
+    });
 
     Route::middleware('account-admin')->prefix('organizacion')->name('organization.')->group(function () {
         Route::get('/', [OrganizationController::class, 'index'])->name('index');
