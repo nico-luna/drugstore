@@ -10,13 +10,14 @@ use App\Http\Controllers\Sales\SaleHistoryController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Tenancy\TenantContextController;
 use App\Http\Controllers\Tenancy\OrganizationController;
+use App\Http\Controllers\PublicSiteController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return auth()->check()
-        ? redirect()->route('dashboard')
-        : redirect()->route('login');
-});
+Route::get('/', [PublicSiteController::class, 'home'])->name('home');
+Route::get('/solicitar-acceso', [PublicSiteController::class, 'requestAccess'])->name('access.request');
+Route::post('/solicitar-acceso', [PublicSiteController::class, 'storeRequest'])
+    ->middleware('throttle:5,10')
+    ->name('access.store');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'create'])->name('login');
