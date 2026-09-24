@@ -40,9 +40,9 @@ class ProductController extends Controller
             ->map(fn (Product $product): array => $this->productPayload($product));
 
         $editing = null;
-        $editId = $request->query('edit');
-        if ($editId) {
-            $product = Product::with('inventories')->find($editId);
+        $editId = filter_var($request->query('edit'), FILTER_VALIDATE_INT);
+        if ($editId !== false) {
+            $product = Product::with('inventories')->whereKey($editId)->first();
             $editing = $product ? $this->productPayload($product) : null;
         }
 
@@ -178,16 +178,25 @@ class ProductController extends Controller
     private function productPayload(Product $product): array
     {
         $inventory = $product->inventories->first();
+        $price = '0.00';
+        $stock = 0;
+        $isAvailable = false;
+
+        if ($inventory instanceof StoreInventory) {
+            $price = $inventory->price;
+            $stock = $inventory->stock;
+            $isAvailable = $inventory->is_available;
+        }
 
         return [
             'codproducto' => $product->codproducto,
             'codigo' => $product->codigo,
             'descripcion' => $product->descripcion,
-            'precio' => $inventory?->price ?? '0.00',
-            'existencia' => $inventory?->stock ?? 0,
+            'precio' => $price,
+            'existencia' => $stock,
             'controla_stock' => (bool) $product->controla_stock,
             'estado' => (bool) $product->estado,
-            'is_available' => (bool) ($inventory?->is_available ?? false),
+            'is_available' => (bool) $isAvailable,
         ];
     }
 }
