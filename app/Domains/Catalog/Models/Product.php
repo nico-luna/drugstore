@@ -3,6 +3,8 @@
 namespace App\Domains\Catalog\Models;
 
 use App\Domains\Identity\Models\User;
+use App\Domains\Tenancy\Models\Account;
+use App\Tenancy\Concerns\BelongsToAccount;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int $codproducto
+ * @property int $account_id
  * @property string $codigo
  * @property string $descripcion
  * @property string $precio
@@ -22,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory;
+    use BelongsToAccount, HasFactory;
 
     protected $table = 'producto';
     protected $primaryKey = 'codproducto';
@@ -31,6 +34,7 @@ class Product extends Model
     const UPDATED_AT = 'actualizado_at';
 
     protected $fillable = [
+        'account_id',
         'codigo',
         'descripcion',
         'precio',
@@ -59,5 +63,11 @@ class Product extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id', 'idusuario');
+    }
+
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 }

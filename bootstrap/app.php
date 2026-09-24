@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\EnsureUserHasPermission;
+use App\Http\Middleware\ResolveTenantContext;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'permission' => EnsureUserHasPermission::class,
+            'tenant' => ResolveTenantContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

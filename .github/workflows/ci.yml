@@ -35,3 +35,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build --tag drugstore:test .
+
+  mysql-migrations:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: drugstore_test
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=root"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip
+          coverage: none
+
+      - run: composer install --no-interaction --prefer-dist
+      - name: Apply, roll back and reapply migrations on MySQL
+        env:
+          APP_ENV: testing
+          APP_KEY: base64:3vUBuNRb8ax+r3m7lKqyAFH9M0R1B3gvQlOjqss5wrs=
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: drugstore_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: |
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=1 --force
+          php artisan migrate --force

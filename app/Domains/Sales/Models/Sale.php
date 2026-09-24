@@ -4,12 +4,18 @@ namespace App\Domains\Sales\Models;
 
 use App\Domains\Customers\Models\Customer;
 use App\Domains\Identity\Models\User;
+use App\Domains\Tenancy\Models\Account;
+use App\Domains\Tenancy\Models\Store;
+use App\Tenancy\Concerns\BelongsToAccount;
+use App\Tenancy\Concerns\BelongsToStore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
+ * @property int $account_id
+ * @property int $store_id
  * @property int $id_cliente
  * @property int $id_usuario
  * @property string $total
@@ -24,10 +30,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Sale extends Model
 {
+    use BelongsToAccount, BelongsToStore;
+
     protected $table = 'ventas';
     public $timestamps = false;
 
     protected $fillable = [
+        'account_id',
+        'store_id',
         'id_cliente',
         'total',
         'id_usuario',
@@ -68,5 +78,17 @@ class Sale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class, 'id_venta', 'id');
+    }
+
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    /** @return BelongsTo<Store, $this> */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
     }
 }

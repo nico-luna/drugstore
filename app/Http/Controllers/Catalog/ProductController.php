@@ -9,9 +9,15 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Tenancy\CurrentTenant;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
+    public function __construct(private readonly CurrentTenant $tenant)
+    {
+    }
+
     public function index(Request $request): Response
     {
         $search = trim((string) $request->query('q', ''));
@@ -49,7 +55,13 @@ class ProductController extends Controller
         abort_unless($user instanceof User, 401);
 
         $validated = $request->validate([
-            'codigo' => ['required', 'string', 'max:50', 'unique:producto,codigo'],
+            'codigo' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('producto', 'codigo')
+                    ->where(fn ($query) => $query->where('account_id', $this->tenant->accountId())),
+            ],
             'descripcion' => ['required', 'string', 'max:200'],
             'precio' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'existencia' => ['required', 'integer', 'min:0'],
@@ -84,7 +96,14 @@ class ProductController extends Controller
         $product = Product::findOrFail($id);
 
         $validated = $request->validate([
-            'codigo' => ['required', 'string', 'max:50', 'unique:producto,codigo,' . $id . ',codproducto'],
+            'codigo' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('producto', 'codigo')
+                    ->where(fn ($query) => $query->where('account_id', $this->tenant->accountId()))
+                    ->ignore($id, 'codproducto'),
+            ],
             'descripcion' => ['required', 'string', 'max:200'],
             'precio' => ['required', 'numeric', 'min:0', 'max:9999999999.99'],
             'existencia' => ['required', 'integer', 'min:0'],

@@ -3,6 +3,8 @@
 namespace App\Domains\Customers\Models;
 
 use App\Domains\Identity\Models\User;
+use App\Domains\Tenancy\Models\Account;
+use App\Tenancy\Concerns\BelongsToAccount;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int $idcliente
+ * @property int $account_id
  * @property string $nombre
  * @property string $telefono
  * @property string $direccion
@@ -20,7 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Customer extends Model
 {
     /** @use HasFactory<CustomerFactory> */
-    use HasFactory;
+    use BelongsToAccount, HasFactory;
 
     protected $table = 'cliente';
     protected $primaryKey = 'idcliente';
@@ -29,6 +32,7 @@ class Customer extends Model
     const UPDATED_AT = 'actualizado_at';
 
     protected $fillable = [
+        'account_id',
         'nombre',
         'telefono',
         'direccion',
@@ -52,5 +56,11 @@ class Customer extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id', 'idusuario');
+    }
+
+    /** @return BelongsTo<Account, $this> */
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
     }
 }

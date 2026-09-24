@@ -8,12 +8,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Tenancy\CurrentTenant;
 
 class SettingsController extends Controller
 {
+    public function __construct(private readonly CurrentTenant $tenant)
+    {
+    }
+
     public function edit(): Response
     {
-        $config = DB::table('configuracion')->where('id', 1)->first();
+        $config = DB::table('configuracion')
+            ->where('account_id', $this->tenant->accountId())
+            ->where('store_id', $this->tenant->storeId())
+            ->first();
 
         return Inertia::render('Settings/Edit', [
             'config' => [
@@ -38,7 +46,15 @@ class SettingsController extends Controller
         $data['telefono']  = $data['telefono']  ?? '';
         $data['direccion'] = $data['direccion'] ?? '';
 
-        DB::table('configuracion')->where('id', 1)->update($data);
+        $data['actualizado_at'] = now();
+
+        DB::table('configuracion')->updateOrInsert(
+            [
+                'account_id' => $this->tenant->accountId(),
+                'store_id' => $this->tenant->storeId(),
+            ],
+            $data,
+        );
 
         return redirect()
             ->route('configuracion.edit')

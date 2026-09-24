@@ -6,6 +6,7 @@ use App\Domains\Customers\Models\Customer;
 use App\Domains\Catalog\Models\Product;
 use App\Domains\Sales\Models\Sale;
 use App\Domains\Sales\Models\SaleItem;
+use App\Tenancy\CurrentTenant;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
@@ -13,6 +14,10 @@ use Throwable;
 
 class SaleService
 {
+    public function __construct(private readonly CurrentTenant $tenant)
+    {
+    }
+
     /**
      * Creates a new sale in a database transaction with server-side price re-validation,
      * SELECT ... FOR UPDATE locking, and atomic stock decrements.
@@ -66,6 +71,8 @@ class SaleService
             }
 
             $sale = Sale::create([
+                'account_id' => $this->tenant->accountId(),
+                'store_id' => $this->tenant->storeId(),
                 'id_cliente' => $clientId,
                 'total' => number_format($total, 2, '.', ''),
                 'id_usuario' => $userId,
@@ -89,6 +96,7 @@ class SaleService
 
                 if ((bool) $product->controla_stock) {
                     $affected = DB::table('producto')
+                        ->where('account_id', $this->tenant->accountId())
                         ->where('codproducto', $productId)
                         ->where('existencia', '>=', $quantity)
                         ->decrement('existencia', $quantity);
@@ -133,12 +141,15 @@ class SaleService
             foreach ($items as $item) {
                 if ($item->product && (bool) $item->product->controla_stock) {
                     DB::table('producto')
+                        ->where('account_id', $this->tenant->accountId())
                         ->where('codproducto', $item->id_producto)
                         ->increment('existencia', (int) $item->cantidad);
                 }
             }
 
             $affected = DB::table('ventas')
+                ->where('account_id', $this->tenant->accountId())
+                ->where('store_id', $this->tenant->storeId())
                 ->where('id', $saleId)
                 ->where('estado', 'confirmada')
                 ->update([
