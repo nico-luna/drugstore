@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\EnsureUserHasPermission;
 use App\Http\Middleware\ResolveTenantContext;
+use App\Http\Middleware\EnsureAccountAdmin;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permission' => EnsureUserHasPermission::class,
             'tenant' => ResolveTenantContext::class,
+            'account-admin' => EnsureAccountAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

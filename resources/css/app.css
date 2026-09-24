@@ -152,6 +152,13 @@ tfoot th { font-size: .9rem; color: var(--ink); background: white; }
 .detail-grid div { padding: 12px; background: #f8fafc; border-radius: 9px; }
 .detail-grid dt { color: var(--muted); font-size: .75rem; text-transform: uppercase; }
 .detail-grid dd { margin: 5px 0 0; font-weight: 700; }
+.organization-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 22px; }
+.organization-section { margin-top: 22px; }
+.member-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.member-card { display: flex; flex-direction: column; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fcfcfd; }
+.member-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.member-heading div { display: flex; flex-direction: column; gap: 4px; }
+.member-heading span { color: var(--muted); font-size: .82rem; }
 
 .login-page { display: grid; place-items: center; min-height: 100vh; padding: 24px; background: radial-gradient(circle at top left, #d1e0ff, transparent 42%), #f4f6f8; }
 .login-card { width: min(430px, 100%); padding: 38px; background: white; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 50px rgba(16, 24, 40, .14); }
@@ -192,4 +199,5 @@ tfoot th { font-size: .9rem; color: var(--ink); background: white; }
     .workspace-bar > div { display: grid; grid-template-columns: 65px 1fr; }
     .workspace-bar select { width: 100%; min-width: 0; }
     .workspace-role { align-self: flex-start; }
+    .organization-grid { grid-template-columns: 1fr; }
 }
