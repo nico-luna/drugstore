@@ -43,8 +43,13 @@ class TenantContextController extends Controller
             $stores->whereHas('users', fn ($query) => $query->where('usuario.idusuario', $user->idusuario));
         }
 
-        $storeId = $validated['store_id'] ?? $membership->default_store_id;
-        $store = $stores->find($storeId) ?? $stores->orderBy('name')->first();
+        $storeId = isset($validated['store_id'])
+            ? (int) $validated['store_id']
+            : $membership->default_store_id;
+        $store = $storeId !== null
+            ? (clone $stores)->whereKey($storeId)->first()
+            : null;
+        $store ??= $stores->orderBy('name')->first();
 
         if (!$store) {
             throw ValidationException::withMessages([
