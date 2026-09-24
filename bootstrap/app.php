@@ -7,6 +7,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\EnsureUserHasPermission;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\EnsureAccountAdmin;
+use App\Http\Middleware\EnsurePlatformAdmin;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => EnsureUserHasPermission::class,
             'tenant' => ResolveTenantContext::class,
             'account-admin' => EnsureAccountAdmin::class,
+            'platform-admin' => EnsurePlatformAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

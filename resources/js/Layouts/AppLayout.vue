@@ -78,6 +78,13 @@
         >
           Organización
         </Link>
+        <Link
+          v-if="user?.is_platform_admin"
+          href="/plataforma/solicitudes"
+          :class="{ active: currentUrl.startsWith('/plataforma') }"
+        >
+          Solicitudes
+        </Link>
       </nav>
 
       <div class="account">

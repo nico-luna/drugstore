@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
                     'correo' => $user->correo,
                     'usuario' => $user->usuario,
                     'es_admin' => $user->isAccountAdmin(),
+                    'is_platform_admin' => (bool) $user->is_platform_admin,
                     'estado' => $user->estado,
                     'role' => app(CurrentTenant::class)->resolved()
                         ? app(CurrentTenant::class)->membership()->role
