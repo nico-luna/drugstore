@@ -1,6 +1,7 @@
 <?php
 
-test('the application redirects guests to login', function () {
+test('the application renders the public home', function () {
     $response = $this->get('/');
-    $response->assertRedirect('/login');
+    $response->assertOk();
+    $response->assertInertia(fn ($page) => $page->component('Public/Home'));
 });
