@@ -8,6 +8,7 @@ use App\Http\Controllers\Identity\UserController;
 use App\Http\Controllers\Sales\NewSaleController;
 use App\Http\Controllers\Sales\SaleHistoryController;
 use App\Http\Controllers\Settings\SettingsController;
+use App\Http\Controllers\Tenancy\TenantContextController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -21,8 +22,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'store']);
 });
 
-Route::middleware('auth')->group(function () {
-    Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
+Route::middleware('auth')->post('/logout', [LoginController::class, 'destroy'])->name('logout');
+
+Route::middleware(['auth', 'tenant'])->group(function () {
+    Route::post('/contexto', [TenantContextController::class, 'update'])->name('tenant.context.update');
 
     // Dashboard Module (Fase 1B.6)
     Route::get('/dashboard', DashboardController::class)->name('dashboard');

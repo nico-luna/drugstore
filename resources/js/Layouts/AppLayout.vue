@@ -85,6 +85,48 @@
       </div>
     </header>
 
+    <section
+      v-if="tenant"
+      class="workspace-bar"
+      aria-label="Contexto de trabajo"
+    >
+      <div>
+        <span>Cuenta</span>
+        <select
+          :value="tenant.account.id"
+          aria-label="Cuenta activa"
+          :disabled="tenant.accounts.length < 2"
+          @change="changeAccount"
+        >
+          <option
+            v-for="accountItem in tenant.accounts"
+            :key="accountItem.id"
+            :value="accountItem.id"
+          >
+            {{ accountItem.name }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <span>Tienda</span>
+        <select
+          :value="tenant.store.id"
+          aria-label="Tienda activa"
+          :disabled="tenant.stores.length < 2"
+          @change="changeStore"
+        >
+          <option
+            v-for="storeItem in tenant.stores"
+            :key="storeItem.id"
+            :value="storeItem.id"
+          >
+            {{ storeItem.name }}
+          </option>
+        </select>
+      </div>
+      <span class="workspace-role">{{ tenant.account.role }}</span>
+    </section>
+
     <main class="page-shell">
       <div
         v-if="title"
@@ -120,7 +162,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
-import type { PageProps, User } from '@/types';
+import type { PageProps, TenantContext, User } from '@/types';
 
 defineProps<{
   title?: string;
@@ -130,6 +172,7 @@ const mobileNavOpen = ref(false);
 const page = usePage<PageProps>();
 
 const user = computed<User | null>(() => page.props.auth?.user ?? null);
+const tenant = computed<TenantContext | null>(() => page.props.tenant ?? null);
 const currentUrl = computed(() => page.url);
 
 const flashSuccess = computed(() => page.props.flash?.success);
@@ -143,5 +186,25 @@ const can = (permission: string): boolean => {
 
 const logout = () => {
   router.post('/logout');
+};
+
+const changeAccount = (event: Event) => {
+  const accountId = Number((event.target as HTMLSelectElement).value);
+  router.post('/contexto', { account_id: accountId, store_id: null }, {
+    preserveScroll: true,
+    preserveState: false,
+  });
+};
+
+const changeStore = (event: Event) => {
+  if (!tenant.value) return;
+
+  router.post('/contexto', {
+    account_id: tenant.value.account.id,
+    store_id: Number((event.target as HTMLSelectElement).value),
+  }, {
+    preserveScroll: true,
+    preserveState: false,
+  });
 };
 </script>

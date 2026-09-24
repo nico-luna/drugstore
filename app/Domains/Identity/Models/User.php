@@ -2,11 +2,16 @@
 
 namespace App\Domains\Identity\Models;
 
+use App\Domains\Tenancy\Models\Account;
+use App\Domains\Tenancy\Models\AccountMembership;
+use App\Domains\Tenancy\Models\Store;
+use App\Tenancy\CurrentTenant;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $idusuario
@@ -56,6 +61,30 @@ class User extends Authenticatable
         return UserFactory::new();
     }
 
+    protected static function booted(): void
+    {
+        static::created(function (User $user): void {
+            $tenant = app(CurrentTenant::class);
+            if (!$tenant->workspaceResolved()) {
+                return;
+            }
+
+            AccountMembership::query()->firstOrCreate(
+                [
+                    'account_id' => $tenant->accountId(),
+                    'user_id' => $user->idusuario,
+                ],
+                [
+                    'default_store_id' => $tenant->storeId(),
+                    'role' => $user->es_admin ? 'admin' : 'staff',
+                    'is_active' => true,
+                ]
+            );
+
+            $user->stores()->syncWithoutDetaching([$tenant->storeId()]);
+        });
+    }
+
     public function getAuthPassword(): string
     {
         return $this->clave;
@@ -74,9 +103,30 @@ class User extends Authenticatable
         );
     }
 
+    /** @return BelongsToMany<Account, $this> */
+    public function accounts(): BelongsToMany
+    {
+        return $this->belongsToMany(Account::class, 'account_user', 'user_id', 'account_id', 'idusuario', 'id')
+            ->withPivot(['role', 'is_active', 'default_store_id'])
+            ->withTimestamps();
+    }
+
+    /** @return BelongsToMany<Store, $this> */
+    public function stores(): BelongsToMany
+    {
+        return $this->belongsToMany(Store::class, 'store_user', 'user_id', 'store_id', 'idusuario', 'id')
+            ->withTimestamps();
+    }
+
+    /** @return HasMany<AccountMembership, $this> */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(AccountMembership::class, 'user_id', 'idusuario');
+    }
+
     public function hasPermission(string $permission): bool
     {
-        if ($this->es_admin) {
+        if ($this->isAccountAdmin()) {
             return true;
         }
 
@@ -86,7 +136,7 @@ class User extends Authenticatable
     /** @return array<int, string> */
     public function getPermissionsList(): array
     {
-        if ($this->es_admin) {
+        if ($this->isAccountAdmin()) {
             return Permission::query()
                 ->pluck('nombre')
                 ->map(static fn (mixed $permission): string => (string) $permission)
@@ -99,5 +149,25 @@ class User extends Authenticatable
             ->map(static fn (mixed $permission): string => (string) $permission)
             ->values()
             ->all();
+    }
+
+    public function isAccountAdmin(): bool
+    {
+        $tenant = app(CurrentTenant::class);
+
+        if (!$tenant->resolved()) {
+            return (bool) $this->es_admin;
+        }
+
+        $membership = $tenant->membership()->user_id === $this->idusuario
+            ? $tenant->membership()
+            : AccountMembership::query()
+                ->where('account_id', $tenant->accountId())
+                ->where('user_id', $this->idusuario)
+                ->where('is_active', true)
+                ->first();
+
+        return $membership !== null
+            && in_array($membership->role, ['owner', 'admin'], true);
     }
 }
