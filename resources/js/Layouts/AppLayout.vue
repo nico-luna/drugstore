@@ -71,6 +71,13 @@
         >
           Configuración
         </Link>
+        <Link
+          v-if="tenant && ['owner', 'admin'].includes(tenant.account.role)"
+          href="/organizacion"
+          :class="{ active: currentUrl.startsWith('/organizacion') }"
+        >
+          Organización
+        </Link>
       </nav>
 
       <div class="account">

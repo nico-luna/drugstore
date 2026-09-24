@@ -9,6 +9,7 @@ use App\Http\Controllers\Sales\NewSaleController;
 use App\Http\Controllers\Sales\SaleHistoryController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Tenancy\TenantContextController;
+use App\Http\Controllers\Tenancy\OrganizationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -26,6 +27,14 @@ Route::middleware('auth')->post('/logout', [LoginController::class, 'destroy'])-
 
 Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('/contexto', [TenantContextController::class, 'update'])->name('tenant.context.update');
+
+    Route::middleware('account-admin')->prefix('organizacion')->name('organization.')->group(function () {
+        Route::get('/', [OrganizationController::class, 'index'])->name('index');
+        Route::put('/cuenta', [OrganizationController::class, 'updateAccount'])->name('account.update');
+        Route::post('/tiendas', [OrganizationController::class, 'storeStore'])->name('stores.store');
+        Route::post('/tiendas/{store}/toggle', [OrganizationController::class, 'toggleStore'])->name('stores.toggle');
+        Route::put('/miembros/{membership}', [OrganizationController::class, 'updateMember'])->name('members.update');
+    });
 
     // Dashboard Module (Fase 1B.6)
     Route::get('/dashboard', DashboardController::class)->name('dashboard');

@@ -69,6 +69,16 @@ class User extends Authenticatable
                 return;
             }
 
+            $role = 'staff';
+            if ($user->es_admin) {
+                $hasOwner = AccountMembership::query()
+                    ->where('account_id', $tenant->accountId())
+                    ->where('role', 'owner')
+                    ->where('is_active', true)
+                    ->exists();
+                $role = $hasOwner ? 'admin' : 'owner';
+            }
+
             AccountMembership::query()->firstOrCreate(
                 [
                     'account_id' => $tenant->accountId(),
@@ -76,7 +86,7 @@ class User extends Authenticatable
                 ],
                 [
                     'default_store_id' => $tenant->storeId(),
-                    'role' => $user->es_admin ? 'admin' : 'staff',
+                    'role' => $role,
                     'is_active' => true,
                 ]
             );
